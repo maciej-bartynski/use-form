@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+      "target": "esnext",
+      "module": "es6",
+      "strict": true,
+      "noEmit": true,
+      "isolatedModules": true,
+      "esModuleInterop": true,
+      "jsx": "react",
+      "skipLibCheck": true,
+      "moduleResolution": "node",
+      "resolveJsonModule": true,
+      "baseUrl": "src",
+      "paths": {
+          "src/*": [
+              ""
+          ],
+      }
+  },
+  "include": [
+      "./src/**/*"
+  ]
+}
