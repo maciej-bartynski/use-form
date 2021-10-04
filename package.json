@@ -2,12 +2,15 @@
   "name": "use-form",
   "version": "1.0.0",
   "description": "react custom hook for form data managing",
-  "main": "index.js",
+  "main": "./dist/index.js",
   "scripts": {
     "build": "NODE_ENV=production & webpack --mode production",
     "start": "webpack serve --mode development --open",
     "ts-check": "tsc",
-    "ts-watch": "tsc -w"
+    "ts-watch": "tsc -w",
+    "verify": "npm run ts-check && npm run lint && npm run prettier",
+    "lint": "eslint './src/**/*.{js,jsx,ts,tsx}' --fix",
+    "prettier": "prettier --config .prettierrc.js 'src/**/*.{js,jsx,ts,tsx}' --write"
   },
   "author": "Maciej Bartyński",
   "license": "MIT",
@@ -19,6 +22,10 @@
     "typescript",
     "npm"
   ],
+  "peerDependencies": {
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
+  },
   "devDependencies": {
     "@babel/core": "^7.13.16",
     "@babel/plugin-proposal-class-properties": "^7.13.0",
@@ -29,10 +36,16 @@
     "@babel/runtime": "^7.14.0",
     "@types/react": "^17.0.26",
     "@types/react-dom": "^17.0.9",
+    "@typescript-eslint/eslint-plugin": "^4.32.0",
     "babel-loader": "^8.2.2",
     "css-loader": "^5.2.4",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-react": "^7.26.1",
     "html-webpack-plugin": "^5.3.2",
     "mini-css-extract-plugin": "^2.3.0",
+    "prettier": "^2.4.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "ts-loader": "^9.1.1",

@@ -1,6 +1,9 @@
-import { FormContextType, FormStateErrorsAndWarningsType, FormStateTouchedType, FormStateType } from "./types";
+import { FormContextType, FormStateErrorsAndWarningsType, FormStateTouchedType, FormStateType } from './types';
 
-export function getInitialState<FormValuesType>(initialValues?: FormValuesType, initialDirty?: boolean): FormStateType<FormValuesType> {
+export function getInitialState<FormValuesType>(
+    initialValues?: FormValuesType,
+    initialDirty?: boolean,
+): FormStateType<FormValuesType> {
     return {
         values: initialValues as FormValuesType,
         errors: {} as FormStateErrorsAndWarningsType<FormValuesType>,
@@ -11,12 +14,12 @@ export function getInitialState<FormValuesType>(initialValues?: FormValuesType, 
         dirty: !!initialDirty,
         isSubmitting: false,
         isChecking: false,
-    }
+    };
 }
 
 export function getInitialContextValue<FormValuesType>(initialValues: FormValuesType): FormContextType<FormValuesType> {
     return {
-        values: initialValues || {} as FormValuesType,
+        values: initialValues || ({} as FormValuesType),
         errors: {} as FormStateErrorsAndWarningsType<FormValuesType>,
         warnings: {} as FormStateErrorsAndWarningsType<FormValuesType>,
         asyncErrors: {} as FormStateErrorsAndWarningsType<FormValuesType>,
@@ -25,11 +28,11 @@ export function getInitialContextValue<FormValuesType>(initialValues: FormValues
         dirty: false,
         isSubmitting: false,
         isChecking: false,
-        submitForm: () => { },
-        setFields: async () => { }
+        submitForm: function () {
+            return;
+        },
+        setFields: async function () {
+            return;
+        },
     };
 }
-
-
-
-

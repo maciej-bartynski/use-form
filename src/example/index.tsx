@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import "./index.css";
+import './index.css';
 import Form from './form';
 
 const App: React.FC = () => (
@@ -8,7 +8,7 @@ const App: React.FC = () => (
         <h1>Hello useForm!</h1>
         <Form />
     </div>
-)
+);
 
-const rootNode = document.querySelector("#root");
+const rootNode = document.querySelector('#root');
 ReactDOM.render(<App />, rootNode);
