@@ -31,7 +31,22 @@ export function getInitialContextValue<FormValuesType>(initialValues: FormValues
         submitForm: function () {
             return;
         },
-        setFields: async function () {
+        asyncOnFieldChange: async function () {
+            return;
+        },
+        onFieldChange: function () {
+            return;
+        },
+        setValues: function () {
+            return;
+        },
+        setMessages: function () {
+            return;
+        },
+        asyncSetMessages: async function () {
+            return;
+        },
+        setTouched: function () {
             return;
         },
     };

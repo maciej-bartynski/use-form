@@ -4,6 +4,8 @@ import { initialValues } from './config';
 import './index.css';
 import { asyncValidators } from './asyncCheckers';
 import { validators, warningators } from './checkers';
+import TextInput from './TextInput';
+import Checkbox from './Checkbox';
 
 const Form: React.FC = () => {
     const form = useForm({
@@ -34,87 +36,113 @@ const Form: React.FC = () => {
         },
     });
 
-    const setName = (e: React.FormEvent<HTMLInputElement>) => {
-        const text = e.currentTarget.value;
-        form.setFields({ name: text });
-    };
-
-    const setSurname = (e: React.FormEvent<HTMLInputElement>) => {
-        const text = e.currentTarget.value;
-        form.setFields({ surname: text });
-    };
-
-    const setMail = (e: React.FormEvent<HTMLInputElement>) => {
-        const text = e.currentTarget.value;
-        form.setFields({ mail: text });
-    };
-
-    const setReact = (e: React.FormEvent<HTMLInputElement>) => {
-        const checked = e.currentTarget.checked;
-        form.setFields({ react: checked });
-    };
-
-    const nameError = form.asyncErrors.name || form.errors.name;
-    const surnameError = form.asyncErrors.surname || form.errors.surname;
-    const mailError = form.asyncErrors.mail || form.errors.mail;
-    const reactError = form.asyncErrors.react || form.errors.name;
-
-    const nameWarning = form.asyncWarnings.name || form.warnings.name;
-    const surnameWarning = form.asyncWarnings.surname || form.warnings.surname;
-    const mailWarning = form.asyncWarnings.mail || form.warnings.mail;
-    const reactWarning = form.asyncWarnings.react || form.warnings.react;
-
     return (
         <form
+            className="form"
             onSubmit={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 form.submitForm();
             }}
         >
-            <label className="field">
-                <div>Set name:</div>
-                <input value={form.values.name} onChange={setName} />
-                <div>
-                    {nameError && <div className="errorMsg">{nameError}</div>}
-                    {nameWarning && <div className="warningMsg">{nameWarning}</div>}
-                </div>
-            </label>
+            <TextInput
+                label={'name'}
+                value={form.values.name}
+                touched={form.touched.name}
+                onFocus={(e) => {
+                    const { value } = e.currentTarget;
+                    form.setTouched({ name: value });
+                }}
+                onChange={(e) => {
+                    const { value } = e.currentTarget;
+                    form.setValues({ name: value });
+                    form.setMessages({ name: value });
+                }}
+                onBlur={(e) => {
+                    const { value } = e.currentTarget;
+                    form.asyncSetMessages({ name: value });
+                }}
+                error={form.errors.name}
+                warning={form.warnings.name}
+                asyncError={form.asyncErrors.name}
+                asyncWarning={form.asyncWarnings.name}
+            />
+            <TextInput
+                label={'surname'}
+                value={form.values.surname}
+                touched={form.touched.surname}
+                onFocus={(e) => {
+                    const { value } = e.currentTarget;
+                    form.setTouched({ surname: value });
+                }}
+                onChange={(e) => {
+                    const { value } = e.currentTarget;
+                    form.setValues({ surname: value });
+                    form.setMessages({ surname: value });
+                }}
+                onBlur={(e) => {
+                    const { value } = e.currentTarget;
+                    form.asyncSetMessages({ surname: value });
+                }}
+                error={form.errors.surname}
+                warning={form.warnings.surname}
+                asyncError={form.asyncErrors.surname}
+                asyncWarning={form.asyncWarnings.surname}
+            />
 
-            <label className="field">
-                <div>Set surname:</div>
-                <input value={form.values.surname} onChange={setSurname} />
-                <div>
-                    {surnameError && <div className="errorMsg">{surnameError}</div>}
-                    {surnameWarning && <div className="warningMsg">{nameWarning}</div>}
-                </div>
-            </label>
+            <TextInput
+                label={'email'}
+                value={form.values.mail}
+                touched={form.touched.mail}
+                onFocus={(e) => {
+                    const { value } = e.currentTarget;
+                    form.setTouched({ mail: value });
+                }}
+                onChange={(e) => {
+                    const { value } = e.currentTarget;
+                    form.setValues({ mail: value });
+                    form.setMessages({ mail: value });
+                }}
+                onBlur={(e) => {
+                    const { value } = e.currentTarget;
+                    form.asyncSetMessages({ mail: value });
+                }}
+                error={form.errors.mail}
+                warning={form.warnings.mail}
+                asyncError={form.asyncErrors.mail}
+                asyncWarning={form.asyncWarnings.mail}
+            />
 
-            <label className="field">
-                <div>Set email:</div>
-                <input value={form.values.mail} onChange={setMail} />
-                <div>
-                    {mailError && <div className="errorMsg">{mailError}</div>}
-                    {mailWarning && <div className="warningMsg">{mailWarning}</div>}
-                </div>
-            </label>
-
-            <label className="field">
-                <div>Has React knowledge:</div>
-                <input checked={form.values.react} type="checkbox" onChange={setReact} />
-                <div>
-                    {reactError && <div className="errorMsg">{reactError}</div>}
-                    {reactWarning && <div className="warningMsg">{reactWarning}</div>}
-                </div>
-            </label>
+            <Checkbox
+                label={'react'}
+                checked={form.values.react}
+                touched={form.touched.react}
+                onFocus={(e) => {
+                    const { checked } = e.currentTarget;
+                    form.setTouched({ react: checked });
+                }}
+                onChange={(e) => {
+                    const { checked } = e.currentTarget;
+                    form.setValues({ react: checked });
+                    form.setMessages({ react: checked });
+                }}
+                onBlur={(e) => {
+                    const { checked } = e.currentTarget;
+                    form.asyncSetMessages({ react: checked });
+                }}
+                error={form.errors.react}
+                warning={form.warnings.react}
+                asyncError={form.asyncErrors.react}
+                asyncWarning={form.asyncWarnings.react}
+            />
 
             <div>
-                {form.isChecking && 'Checking...'}
-                {form.isSubmitting && 'Submitting...'}
                 <button type="submit" disabled={!form.dirty || form.isChecking || form.isSubmitting}>
                     Submit!
                 </button>
             </div>
+            {form.isChecking && <div className="overlay">checking validity...</div>}
+            {form.isSubmitting && <div className="overlay">submitting...</div>}
         </form>
     );
 };

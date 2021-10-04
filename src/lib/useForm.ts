@@ -1,7 +1,12 @@
 import { useCallback, useReducer, useRef } from 'react';
 import { getInitialState } from './config';
-import { FormActionName, getFormReducer } from './formReducer';
-import { FormContextType, SetFieldValue, UseFormParams } from './types';
+import { getFormReducer, FormActionType } from './formReducer';
+import {
+    AsyncMethodWithFormValuesAsParams,
+    FormContextType,
+    MethodWithFormValuesAsParams,
+    UseFormParams,
+} from './types';
 import { asyncGetMessages, getMessages, getTouched } from './utils';
 
 function useForm<FormValuesType>({
@@ -18,71 +23,99 @@ function useForm<FormValuesType>({
     const reducer = useRef(getFormReducer<FormValuesType>()).current;
     const [store, dispatch] = useReducer(reducer, initialStore);
 
-    const setAsyncMessages = useCallback(
-        async (params: Partial<FormValuesType>) => {
-            dispatch({ type: FormActionName.SetChecking });
-            const asyncErrors = await asyncGetMessages(params, store, asyncValidators);
-            const asyncWarnings = await asyncGetMessages(params, store, asyncWarningators);
+    const setTouched: MethodWithFormValuesAsParams<FormValuesType> = useCallback(
+        (params) => {
             dispatch({
-                type: FormActionName.SetMessages,
+                type: FormActionType.SetTouched,
+                payload: getTouched(params),
+            });
+        },
+        [dispatch],
+    );
+
+    const asyncSetMessages: AsyncMethodWithFormValuesAsParams<FormValuesType> = useCallback(
+        async (params) => {
+            dispatch({ type: FormActionType.SetChecking });
+            dispatch({
+                type: FormActionType.AsyncSetMessages,
                 payload: {
-                    warnings: asyncWarnings,
-                    errors: asyncErrors,
+                    asyncWarnings: await asyncGetMessages<FormValuesType>(params, store, asyncWarningators),
+                    asyncErrors: await asyncGetMessages<FormValuesType>(params, store, asyncValidators),
                 },
             });
         },
-        [dispatch, store, asyncValidators, asyncWarningators],
+        [dispatch, asyncWarningators, asyncValidators],
     );
 
-    const setFields: SetFieldValue<FormValuesType> = useCallback(
-        async (params) => {
+    const setMessages: MethodWithFormValuesAsParams<FormValuesType> = useCallback(
+        (params) => {
             dispatch({
-                type: FormActionName.SetFields,
+                type: FormActionType.SetMessages,
                 payload: {
                     warnings: getMessages<FormValuesType>(params, store, warningators),
                     errors: getMessages<FormValuesType>(params, store, validators),
-                    values: params,
-                    touched: getTouched(params),
                 },
             });
-
-            if (asyncWarningators || asyncValidators) {
-                setAsyncMessages(params);
-            }
         },
-        [store, dispatch, setAsyncMessages, asyncWarningators, asyncValidators],
+        [dispatch, warningators, validators],
     );
 
-    // eslint-disable-next-line
-    const setTouched = () => {};
-    // eslint-disable-next-line
-    const setMessages = () => {};
-    // eslint-disable-next-line
-    const setAsyncMsgs = () => {};
-    // eslint-disable-next-line
-    const setValues = () => {};
+    const setValues: MethodWithFormValuesAsParams<FormValuesType> = useCallback(
+        (params) => {
+            dispatch({
+                type: FormActionType.SetValues,
+                payload: params,
+            });
+        },
+        [dispatch],
+    );
 
-    // eslint-disable-next-line
-    const onFieldFocus = () => {
-        // touched
-    };
+    const onFieldChange: MethodWithFormValuesAsParams<FormValuesType> = useCallback(
+        (params) => {
+            const warnings = getMessages(params, store, warningators);
+            const errors = getMessages(params, store, validators);
+            const touched = getTouched(params);
+            dispatch({
+                type: FormActionType.OnFieldsChange,
+                payload: {
+                    warnings,
+                    errors,
+                    touched,
+                    values: params,
+                },
+            });
+        },
+        [dispatch, store, warningators, validators],
+    );
 
-    // eslint-disable-next-line
-    const onFieldBlur = () => {
-        // validate
-    };
-
-    // eslint-disable-next-line
-    const onFieldChange = () => {
-        // touched
-        // validate
-        // set
-    };
+    const asyncOnFieldChange: AsyncMethodWithFormValuesAsParams<FormValuesType> = useCallback(
+        async (params) => {
+            dispatch({
+                type: FormActionType.SetChecking,
+            });
+            const asyncWarnings = await asyncGetMessages(params, store, asyncWarningators);
+            const asyncErrors = await asyncGetMessages(params, store, asyncValidators);
+            const touched = getTouched(params);
+            const warnings = getMessages(params, store, warningators);
+            const errors = getMessages(params, store, validators);
+            dispatch({
+                type: FormActionType.AsyncOnFieldsChange,
+                payload: {
+                    errors,
+                    warnings,
+                    asyncWarnings,
+                    asyncErrors,
+                    touched,
+                    values: params,
+                },
+            });
+        },
+        [dispatch, store, warningators, validators, asyncValidators, asyncWarningators],
+    );
 
     const submitForm = useCallback(async () => {
         dispatch({
-            type: FormActionName.SetSubmitting,
-            payload: true,
+            type: FormActionType.SetSubmitting,
         });
 
         let errors = {};
@@ -116,15 +149,20 @@ function useForm<FormValuesType>({
         if (hasErrors && onSubmitFail) onSubmitFail(nextStore);
         else onSubmit && (await onSubmit(nextStore));
         dispatch({
-            type: FormActionName.EndSubmitting,
+            type: FormActionType.EndSubmitting,
             payload: nextStore,
         });
     }, [store, onSubmitFail, onSubmit]);
 
     return {
         ...store,
-        setFields,
         submitForm,
+        asyncOnFieldChange,
+        onFieldChange,
+        setValues,
+        setMessages,
+        asyncSetMessages,
+        setTouched,
     };
 }
 

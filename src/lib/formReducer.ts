@@ -1,14 +1,20 @@
 import { FormStateErrorsAndWarningsType, FormStateTouchedType, FormStateType } from './types';
 
-enum _FormActionType {
+export enum FormActionType {
     SetMessages = 'SetMessages',
     SetTouched = 'SetTouched',
     AsyncSetMessages = 'AsyncSetMessages',
     SetValues = 'SetValues',
+    OnFieldsChange = 'OnFieldsChange',
+    AsyncOnFieldsChange = 'AsyncOnFieldsChange',
+    SetChecking = 'SetChecking',
+
+    SetSubmitting = 'SetSubmitting',
+    EndSubmitting = 'EndSubmitting',
 }
 
 interface FormActionSetMessages<FormValues> {
-    type: _FormActionType.SetMessages;
+    type: FormActionType.SetMessages;
     payload: {
         errors: FormStateErrorsAndWarningsType<FormValues>;
         warnings: FormStateErrorsAndWarningsType<FormValues>;
@@ -16,66 +22,57 @@ interface FormActionSetMessages<FormValues> {
 }
 
 interface FormActionAsyncSetMessages<FormValues> {
-    type: _FormActionType.AsyncSetMessages;
+    type: FormActionType.AsyncSetMessages;
     payload: {
-        errors: FormStateErrorsAndWarningsType<FormValues>;
-        warnings: FormStateErrorsAndWarningsType<FormValues>;
+        asyncErrors: FormStateErrorsAndWarningsType<FormValues>;
+        asyncWarnings: FormStateErrorsAndWarningsType<FormValues>;
     };
 }
 
 interface FormActionSetTouched<FormValues> {
-    type: _FormActionType.SetTouched;
+    type: FormActionType.SetTouched;
     payload: FormStateTouchedType<FormValues>;
 }
 
 interface FormActionSetValues<FormValues> {
-    type: _FormActionType.SetValues;
+    type: FormActionType.SetValues;
     payload: Partial<FormValues>;
 }
 
-// eslint-disable-next-line
-type _FormAction<FormValues> =
-    | FormActionSetValues<FormValues>
-    | FormActionSetTouched<FormValues>
-    | FormActionSetMessages<FormValues>
-    | FormActionAsyncSetMessages<FormValues>;
-
-export enum FormActionName {
-    SetFields = 'SetFields',
-    SetChecking = 'SetChecking',
-    SetMessages = 'SetMessages',
-    SetSubmitting = 'SetSubmitting',
-    EndSubmitting = 'EndSubmitting',
+interface FormActionOnFieldsChange<FormValues> {
+    type: FormActionType.OnFieldsChange;
+    payload: {
+        errors: FormStateErrorsAndWarningsType<FormValues>;
+        warnings: FormStateErrorsAndWarningsType<FormValues>;
+        touched: FormStateTouchedType<FormValues>;
+        values: Partial<FormValues>;
+    };
 }
 
-type FormAction<FormValues> =
-    | {
-          type: FormActionName.SetFields;
-          payload: {
-              values: Partial<FormValues>;
-              errors: FormStateErrorsAndWarningsType<FormValues>;
-              warnings: FormStateErrorsAndWarningsType<FormValues>;
-              touched: FormStateTouchedType<FormValues>;
-          };
-      }
-    | {
-          type: FormActionName.SetChecking;
-      }
-    | {
-          type: FormActionName.SetMessages;
-          payload: {
-              errors: FormStateErrorsAndWarningsType<FormValues>;
-              warnings: FormStateErrorsAndWarningsType<FormValues>;
-          };
-      }
-    | {
-          type: FormActionName.SetSubmitting;
-          payload: boolean;
-      }
-    | {
-          type: FormActionName.EndSubmitting;
-          payload: FormStateType<FormValues>;
-      };
+interface FormActionAsyncOnFieldsChange<FormValues> {
+    type: FormActionType.AsyncOnFieldsChange;
+    payload: {
+        errors: FormStateErrorsAndWarningsType<FormValues>;
+        warnings: FormStateErrorsAndWarningsType<FormValues>;
+        asyncErrors: FormStateErrorsAndWarningsType<FormValues>;
+        asyncWarnings: FormStateErrorsAndWarningsType<FormValues>;
+        touched: FormStateTouchedType<FormValues>;
+        values: Partial<FormValues>;
+    };
+}
+
+interface FormActionSetChecking {
+    type: FormActionType.SetChecking;
+}
+
+interface FormActionSetSubmitting {
+    type: FormActionType.SetSubmitting;
+}
+
+interface FormActionEndSubmitting<FormValues> {
+    type: FormActionType.EndSubmitting;
+    payload: FormStateType<FormValues>;
+}
 
 export function getFormReducer<FormValuesType>(): (
     state: FormStateType<FormValuesType>,
@@ -84,12 +81,77 @@ export function getFormReducer<FormValuesType>(): (
     return formReducer;
 }
 
+type FormAction<FormValues> =
+    | FormActionSetValues<FormValues>
+    | FormActionSetTouched<FormValues>
+    | FormActionSetMessages<FormValues>
+    | FormActionAsyncSetMessages<FormValues>
+    | FormActionOnFieldsChange<FormValues>
+    | FormActionAsyncOnFieldsChange<FormValues>
+    | FormActionSetChecking
+    | FormActionEndSubmitting<FormValues>
+    | FormActionSetSubmitting;
+
 function formReducer<FormValuesType>(
     state: FormStateType<FormValuesType>,
     action: FormAction<FormValuesType>,
 ): FormStateType<FormValuesType> {
     switch (action.type) {
-        case FormActionName.SetFields: {
+        case FormActionType.SetTouched: {
+            return {
+                ...state,
+                dirty: true,
+                touched: {
+                    ...state.touched,
+                    ...action.payload,
+                },
+            };
+        }
+        case FormActionType.SetValues: {
+            return {
+                ...state,
+                dirty: true,
+                values: {
+                    ...state.values,
+                    ...action.payload,
+                },
+            };
+        }
+        case FormActionType.SetMessages: {
+            return {
+                ...state,
+                errors: {
+                    ...state.errors,
+                    ...action.payload.errors,
+                },
+                warnings: {
+                    ...state.warnings,
+                    ...action.payload.warnings,
+                },
+            };
+        }
+        case FormActionType.AsyncSetMessages: {
+            return {
+                ...state,
+                isChecking: false,
+                asyncErrors: {
+                    ...state.asyncErrors,
+                    ...action.payload.asyncErrors,
+                },
+                asyncWarnings: {
+                    ...state.asyncWarnings,
+                    ...action.payload.asyncWarnings,
+                },
+            };
+        }
+        case FormActionType.SetChecking: {
+            return {
+                ...state,
+                isChecking: true,
+                dirty: true,
+            };
+        }
+        case FormActionType.OnFieldsChange: {
             return {
                 ...state,
                 dirty: true,
@@ -111,33 +173,43 @@ function formReducer<FormValuesType>(
                 },
             };
         }
-        case FormActionName.SetChecking: {
-            return {
-                ...state,
-                isChecking: true,
-            };
-        }
-        case FormActionName.SetMessages: {
+        case FormActionType.AsyncOnFieldsChange: {
             return {
                 ...state,
                 isChecking: false,
                 asyncWarnings: {
+                    ...state.asyncWarnings,
+                    ...action.payload.asyncWarnings,
+                },
+                asyncErrors: {
+                    ...state.asyncErrors,
+                    ...action.payload.asyncErrors,
+                },
+                warnings: {
                     ...state.warnings,
                     ...action.payload.warnings,
                 },
-                asyncErrors: {
+                errors: {
                     ...state.errors,
                     ...action.payload.errors,
                 },
+                touched: {
+                    ...state.touched,
+                    ...action.payload.touched,
+                },
+                values: {
+                    ...state.values,
+                    ...action.payload.values,
+                },
             };
         }
-        case FormActionName.SetSubmitting: {
+        case FormActionType.SetSubmitting: {
             return {
                 ...state,
-                isSubmitting: action.payload,
+                isSubmitting: true,
             };
         }
-        case FormActionName.EndSubmitting: {
+        case FormActionType.EndSubmitting: {
             return action.payload;
         }
         default: {

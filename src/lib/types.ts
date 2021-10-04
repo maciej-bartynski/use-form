@@ -42,10 +42,34 @@ export interface FormStateType<InitialValuesType = Record<string, never>> {
 
 export interface FormContextType<FormValuesType> extends FormStateType<FormValuesType> {
     submitForm: () => void;
-    setFields: SetFieldValue<FormValuesType>;
+    asyncOnFieldChange: AsyncMethodWithFormValuesAsParams<FormValuesType>;
+    onFieldChange: MethodWithFormValuesAsParams<FormValuesType>;
+    setValues: MethodWithFormValuesAsParams<FormValuesType>;
+    setMessages: MethodWithFormValuesAsParams<FormValuesType>;
+    asyncSetMessages: AsyncMethodWithFormValuesAsParams<FormValuesType>;
+    setTouched: MethodWithFormValuesAsParams<FormValuesType>;
+}
+
+export interface SetMessagesMethod<FormValuesType> {
+    (params: Partial<FormValuesType>): void;
+}
+
+export interface AsyncSetMessagesMethod<FormValuesType> {
+    (params: Partial<FormValuesType>): Promise<void>;
+}
+
+export interface SetValuesMethod<FormValuesType> {
+    (params: Partial<FormValuesType>): void;
 }
 
 export interface SetFieldValue<FormValuesType> {
+    (params: Partial<FormValuesType>): Promise<void>;
+}
+
+export interface MethodWithFormValuesAsParams<FormValuesType> {
+    (params: Partial<FormValuesType>): void;
+}
+export interface AsyncMethodWithFormValuesAsParams<FormValuesType> {
     (params: Partial<FormValuesType>): Promise<void>;
 }
 
