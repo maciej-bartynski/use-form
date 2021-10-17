@@ -1,4 +1,4 @@
-export interface ExampleFormValues {
+export type ExampleFormValues = {
     name: string;
     surname: string;
     mail: string;

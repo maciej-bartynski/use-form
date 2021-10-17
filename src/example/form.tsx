@@ -1,5 +1,5 @@
 import React from 'react';
-import useForm from 'lib';
+import useForm from 'lib/useForm';
 import { initialValues } from './config';
 import './index.css';
 import { asyncValidators } from './asyncCheckers';

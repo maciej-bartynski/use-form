@@ -1,29 +1,54 @@
+import { FormValuesAbstract } from 'lib/types';
 import { useCallback, useReducer, useRef } from 'react';
 import { getInitialState } from './config';
 import { getFormReducer, FormActionType } from './formReducer';
 import {
     AsyncMethodWithFormValuesAsParams,
+    FormChecking,
     FormContextType,
     MethodWithFormValuesAsParams,
     UseFormParams,
 } from './types';
-import { asyncGetMessages, getMessages, getTouched } from './utils';
+import { asyncGetMessages, getChecking, getFalsifiedChecking, getMessages, getTouched } from './utils';
 
-function useForm<FormValuesType>({
-    initialDirty = false,
+function useForm<FormValues extends FormValuesAbstract>({
+    initialIsError = false,
+    initialIsWarning = false,
+    initialIsChecking = false,
+    initialIsTouched = false,
+    initialErrors,
+    initialWarnings,
+    initialAsyncErrors,
+    initialAsyncWarnings,
+    initialIsSubmitting,
     initialValues,
+    initialChecking,
+    initialTouched,
     onSubmit,
     onSubmitFail,
     validators,
     warningators,
     asyncValidators,
     asyncWarningators,
-}: UseFormParams<FormValuesType>): FormContextType<FormValuesType> {
-    const initialStore = useRef(getInitialState<FormValuesType>(initialValues, initialDirty)).current;
-    const reducer = useRef(getFormReducer<FormValuesType>()).current;
+}: UseFormParams<FormValues>): FormContextType<FormValues> {
+    const initialStore = useRef(getInitialState<FormValues>({
+        initialValues,
+        initialIsTouched,
+        initialIsError,
+        initialIsWarning,
+        initialIsChecking,
+        initialErrors,
+        initialWarnings,
+        initialAsyncErrors,
+        initialAsyncWarnings,
+        initialChecking,
+        initialTouched,
+        initialIsSubmitting,
+    })).current;
+    const reducer = useRef(getFormReducer<FormValues>()).current;
     const [store, dispatch] = useReducer(reducer, initialStore);
 
-    const setTouched: MethodWithFormValuesAsParams<FormValuesType> = useCallback(
+    const setTouched: MethodWithFormValuesAsParams<FormValues> = useCallback(
         (params) => {
             dispatch({
                 type: FormActionType.SetTouched,
@@ -33,34 +58,45 @@ function useForm<FormValuesType>({
         [dispatch],
     );
 
-    const asyncSetMessages: AsyncMethodWithFormValuesAsParams<FormValuesType> = useCallback(
+    const asyncSetMessages: AsyncMethodWithFormValuesAsParams<FormValues> = useCallback(
         async (params) => {
-            dispatch({ type: FormActionType.SetChecking });
+            const fieldsWitchChecker = getChecking(
+                params, 
+                warningators,
+                validators,
+                asyncWarningators,
+                asyncValidators
+            )
+            dispatch({
+                type: FormActionType.SetChecking,
+                payload: fieldsWitchChecker
+            });
             dispatch({
                 type: FormActionType.AsyncSetMessages,
                 payload: {
-                    asyncWarnings: await asyncGetMessages<FormValuesType>(params, store, asyncWarningators),
-                    asyncErrors: await asyncGetMessages<FormValuesType>(params, store, asyncValidators),
+                    asyncWarnings: await asyncGetMessages<FormValues>(params, store, asyncWarningators),
+                    asyncErrors: await asyncGetMessages<FormValues>(params, store, asyncValidators),
+                    checking: getFalsifiedChecking(fieldsWitchChecker)
                 },
             });
         },
-        [dispatch, asyncWarningators, asyncValidators],
+        [dispatch, store, asyncWarningators, asyncValidators],
     );
 
-    const setMessages: MethodWithFormValuesAsParams<FormValuesType> = useCallback(
+    const setMessages: MethodWithFormValuesAsParams<FormValues> = useCallback(
         (params) => {
             dispatch({
                 type: FormActionType.SetMessages,
                 payload: {
-                    warnings: getMessages<FormValuesType>(params, store, warningators),
-                    errors: getMessages<FormValuesType>(params, store, validators),
+                    warnings: getMessages<FormValues>(params, store, warningators),
+                    errors: getMessages<FormValues>(params, store, validators),
                 },
             });
         },
         [dispatch, warningators, validators],
     );
 
-    const setValues: MethodWithFormValuesAsParams<FormValuesType> = useCallback(
+    const setValues: MethodWithFormValuesAsParams<FormValues> = useCallback(
         (params) => {
             dispatch({
                 type: FormActionType.SetValues,
@@ -70,7 +106,7 @@ function useForm<FormValuesType>({
         [dispatch],
     );
 
-    const onFieldChange: MethodWithFormValuesAsParams<FormValuesType> = useCallback(
+    const onFieldChange: MethodWithFormValuesAsParams<FormValues> = useCallback(
         (params) => {
             const warnings = getMessages(params, store, warningators);
             const errors = getMessages(params, store, validators);
@@ -88,10 +124,18 @@ function useForm<FormValuesType>({
         [dispatch, store, warningators, validators],
     );
 
-    const asyncOnFieldChange: AsyncMethodWithFormValuesAsParams<FormValuesType> = useCallback(
+    const asyncOnFieldChange: AsyncMethodWithFormValuesAsParams<FormValues> = useCallback(
         async (params) => {
+            const checking = getChecking(
+                params, 
+                warningators,
+                validators,
+                asyncWarningators,
+                asyncValidators
+            )
             dispatch({
                 type: FormActionType.SetChecking,
+                payload: checking
             });
             const asyncWarnings = await asyncGetMessages(params, store, asyncWarningators);
             const asyncErrors = await asyncGetMessages(params, store, asyncValidators);
@@ -107,6 +151,7 @@ function useForm<FormValuesType>({
                     asyncErrors,
                     touched,
                     values: params,
+                    checking: getFalsifiedChecking(checking)
                 },
             });
         },
